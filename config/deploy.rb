@@ -92,7 +92,6 @@ task setup_prerequisites: :remote_environment do
   invoke :'nginx:restart'
 end
 
-# ================================================================================================================= #
 task setup: :remote_environment do
   invoke :set_sudo_password
 
