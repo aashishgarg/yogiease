@@ -12,22 +12,20 @@ namespace :nginx do
     command %[sudo apt-get update]
 
     command %[sudo apt-get install -y nginx-extras passenger]
-    comment %['-------------------------------------------------------->>>']
     comment %["edit /etc/nginx/nginx.conf and uncomment passenger_root and passenger_ruby. For example, you may see this:"]
     comment %[#passenger_root /some-filename/locations.ini;]
     comment %[#passenger_ruby /usr/bin/passenger_free_ruby;]
-    comment %[ '-------------------------------------------------------->>>']
   end
 
   desc "Setup nginx configuration for this application"
-  task :setup => :environment do
+  task :setup => :remote_environment do
     command %[sudo -A su -c "echo '#{erb(File.join(__dir__, 'templates', 'nginx_passenger.erb'))}' > /etc/nginx/sites-enabled/#{fetch(:application)}"]
     command %[sudo -A rm -f /etc/nginx/sites-enabled/default]
   end
 
   %w[start stop restart].each do |command|
     # command "#{command} nginx"
-    task command.to_sym => :environment do
+    task command.to_sym => :remote_environment do
       comment %[sudo service nginx #{command}]
     end
   end

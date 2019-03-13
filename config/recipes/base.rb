@@ -1,13 +1,11 @@
 def repository_url
-  STDOUT.puts '------------------------------------------------'
-  STDOUT.puts '********* Please authenticate yourself! ********'
-  STDOUT.puts '------------------------------------------------'
+  STDOUT.puts '--- Please authenticate yourself!'
   STDOUT.print "\nEnter username for the code source repository: "
   _user_name = STDIN.gets.strip
   STDOUT.print "Enter password for user [#{_user_name}] :"
   _password = STDIN.noecho(&:gets).strip
   STDOUT.puts "\n\nThanks!"
-  "https://#{_user_name}:#{_password}@github.com/aashishgarg/quiz.git"
+  "https://#{_user_name}:#{_password}@github.com/aashishgarg/yogiease.git"
 end
 
 def set_branch
@@ -15,7 +13,6 @@ def set_branch
   STDOUT.puts "\nDefault selected Branch for deployment is -> \n"
   STDOUT.puts '------------------------------------------------'
   STDOUT.puts default_branch
-  STDOUT.puts '------------------------------------------------'
   STDOUT.print "\nBranch OK ?? If Yes then press [ENTER] else [enter your branch name] :"
   branch = STDIN.gets.strip
   branch = default_branch if branch.empty?
