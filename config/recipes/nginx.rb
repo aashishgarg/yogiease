@@ -8,13 +8,10 @@ namespace :nginx do
     command %[sudo -A apt-get install -y apt-transport-https ca-certificates]
 
     # Add Passenger APT repository
-    command %[sudo sh -c 'echo deb https://oss-binaries.phusionpassenger.com/apt/passenger #{fetch(:ubuntu_code_name)} main > /etc/apt/sources.list.d/passenger.list']
-    command %[sudo apt-get update]
-
-    command %[sudo apt-get install -y nginx-extras passenger]
-    comment %["edit /etc/nginx/nginx.conf and uncomment passenger_root and passenger_ruby. For example, you may see this:"]
-    comment %[#passenger_root /some-filename/locations.ini;]
-    comment %[#passenger_ruby /usr/bin/passenger_free_ruby;]
+    command %[sudo -A sh -c 'echo deb https://oss-binaries.phusionpassenger.com/apt/passenger #{fetch(:ubuntu_code_name)} main > /etc/apt/sources.list.d/passenger.list']
+    command %[sudo -A apt-get update]
+    command %[sudo -A apt-get install -y nginx-extras libnginx-mod-http-passenger]
+    command %[if [ ! -f /etc/nginx/modules-enabled/50-mod-http-passenger.conf ]; then sudo -A ln -s /usr/share/nginx/modules-available/mod-http-passenger.load /etc/nginx/modules-enabled/50-mod-http-passenger.conf ; fi]
   end
 
   desc "Setup nginx configuration for this application"
