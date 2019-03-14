@@ -5,7 +5,7 @@ require 'mina/rvm'
 require 'yaml'
 require 'io/console'
 
-%w(base nginx mysql check crontab log_rotate product_deployment_sheet).each do |pkg|
+%w(base check crontab log_rotate mysql nginx product_deployment_sheet).each do |pkg|
   require "#{File.join(__dir__, 'recipes', pkg)}"
 end
 
@@ -14,7 +14,7 @@ set :user, 'deploy'
 set :deploy_to, "/home/#{fetch(:user)}/#{fetch(:application)}"
 set :repository, repository_url
 set :branch, set_branch
-set :_rvm_path, "/home/deploy/.rvm/scripts/rvm"
+set :rvm_path, "~/.rvm/scripts/rvm"
 set :ruby_version, "#{File.readlines(File.join(__dir__, '..', '.ruby-version')).first.strip}"
 set :gemset, "#{File.readlines(File.join(__dir__, '..', '.ruby-gemset')).first.strip}"
 set :shared_dirs, fetch(:shared_dirs, []).push('public/system')
@@ -25,7 +25,6 @@ set :ubuntu_code_name, 'bionic' # To find out - (`lsb_release --codename | cut -
 # set :work_sheet_name, 'yogiease'
 
 task :remote_environment do
-  comment '<<-------------- Setting the Environment ---------------------->>'
   set :rails_env, ENV['on'].to_sym unless ENV['on'].nil?
   require "#{File.join(__dir__, 'deploy', "#{fetch(:rails_env)}_configurations_files", "#{fetch(:rails_env)}.rb")}"
   invoke :'rvm:use', "ruby-#{fetch(:ruby_version)}@#{fetch(:gemset)}"
@@ -33,6 +32,7 @@ end
 
 task setup_prerequisites: :remote_environment do
   set :rails_env, ENV['on'].to_sym unless ENV['on'].nil?
+
   require "#{File.join(__dir__, 'deploy', "#{fetch(:rails_env)}_configurations_files", "#{fetch(:rails_env)}.rb")}"
   ['python-software-properties',
    'libmysqlclient-dev',
@@ -64,7 +64,7 @@ task setup_prerequisites: :remote_environment do
    'libpng-dev',
    'openssl',
    'mysql-client',
-   # 'mysql-server',
+   'mysql-server',
    'mime-support',
    'automake',
    'ruby-dev',
@@ -72,16 +72,17 @@ task setup_prerequisites: :remote_environment do
   ].each_with_index do |package, index|
     comment "<<-----------------#{index+1} Installing (#{package}) ------------------>>"
     command %[sudo -A apt-get install -y #{package}]
-
   end
 
+  comment "---------------------------------------------------------"
   comment "-----> Installing Ruby Version Manager"
-  # command %[command curl -sSL https://rvm.io/mpapis.asc | gpg --import]
-  # command %[curl -sSL https://get.rvm.io | bash -s stable --ruby]
-  #
-  # command %[source "#{fetch(:rvm_path)}"]
-  # command %[rvm requirements]
-  # command %[rvm install "#{fetch(:ruby_version)}"]
+  comment "---------------------------------------------------------"
+  command %[sudo -A apt-get install libgdbm-dev libncurses5-dev automake libtool bison libffi-dev]
+  command %[gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB]
+  command %[curl -sSL https://get.rvm.io | bash -s stable]
+  command %[source "#{fetch(:rvm_path)}"]
+  command %[rvm install "#{fetch(:ruby_version)}"]
+  command %[rvm use "#{fetch(:ruby_version)}" --default]
   command %[gem install bundler]
 
   command %[mkdir "#{fetch(:deploy_to)}"]

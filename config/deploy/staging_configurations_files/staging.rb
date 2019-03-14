@@ -3,5 +3,5 @@ set :host_ip, '18.223.190.162'
 set :domain, fetch(:host_ip)
 
 # Rails Environment
-set :rails_env, 'production'
+set :rails_env, 'staging'
 set :ssl_enabled, false
