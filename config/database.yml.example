@@ -2,20 +2,16 @@ default: &default
   adapter: mysql2
   encoding: utf8
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: root
-  password:
   socket: /var/run/mysqld/mysqld.sock
 
-development:
+staging:
   <<: *default
-  database: yogiease_development
-
-test:
-  <<: *default
-  database: yogiease_test
+  database: yogiease_staging
+  username: <%= Rails.application.credentials.staging[:db_name] %>
+  password: <%= Rails.application.credentials.staging[:db_password] %>
 
 production:
   <<: *default
   database: yogiease_production
-  username: yogiease
-  password: <%= ENV['YOGIEASE_DATABASE_PASSWORD'] %>
+  username: <%= Rails.application.credentials.production[:db_name] %>
+  password: <%= Rails.application.credentials.production[:db_password] %>

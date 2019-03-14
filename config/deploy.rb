@@ -18,7 +18,7 @@ set :rvm_path, "~/.rvm/scripts/rvm"
 set :ruby_version, "#{File.readlines(File.join(__dir__, '..', '.ruby-version')).first.strip}"
 set :gemset, "#{File.readlines(File.join(__dir__, '..', '.ruby-gemset')).first.strip}"
 set :shared_dirs, fetch(:shared_dirs, []).push('public/system')
-set :shared_files, fetch(:shared_file, []).push('config/database.yml')
+set :shared_files, fetch(:shared_file, []).push('config/database.yml', 'config/master.key')
 set :term_mode, :nil
 set :ubuntu_code_name, 'bionic' # To find out - (`lsb_release --codename | cut -f2`).
 # set :sheet_name, 'Product deployment status'
@@ -113,9 +113,12 @@ end
 
 task setup_yml: :remote_environment do
   Dir[File.join(__dir__, '*.yml.example')].each do |_path|
-    command %[echo "#{IO.binread(_path)}" > "#{File.join(fetch(:deploy_to), 'shared/config',
-                                                         File.basename(_path, '.yml.example') +'.yml')}"]
+    command %[echo "#{IO.binread(_path)}" > "#{File.join(fetch(:deploy_to), 'shared/config', File.basename(_path, '.yml.example') +'.yml')}"]
   end
+end
+
+task setup_credentials: :remote_environment do
+  command "export RAILS_MASTER_KEY=#{IO.binread(File.join(__dir__,'master.key'))}"
 end
 
 task set_sudo_password: :remote_environment do
@@ -142,6 +145,7 @@ task :deploy => :remote_environment do
     invoke :'git:clone'
     invoke :'deploy:link_shared_paths'
     invoke :'bundle:install'
+    invoke :setup_credentials
     invoke :'mysql:create_database'
     invoke :'rails:db_migrate'
     invoke :'rails:assets_precompile'
