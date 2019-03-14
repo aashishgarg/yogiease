@@ -1,0 +1,10 @@
+<%= File.join(deploy_to, current_path) %>/log/*.log
+{
+daily
+size = 25M
+missingok
+compress
+delaycompress
+notifempty
+copytruncate
+}
