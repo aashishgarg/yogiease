@@ -17,8 +17,8 @@ set :branch, set_branch
 set :rvm_path, "~/.rvm/scripts/rvm"
 set :ruby_version, "#{File.readlines(File.join(__dir__, '..', '.ruby-version')).first.strip}"
 set :gemset, "#{File.readlines(File.join(__dir__, '..', '.ruby-gemset')).first.strip}"
-set :shared_dirs, fetch(:shared_dirs, []).push('public/system')
-set :shared_files, fetch(:shared_file, []).push('config/database.yml', 'config/master.key')
+set :shared_dirs, fetch(:shared_dirs, []).push('public/system', 'tmp')
+set :shared_files, fetch(:shared_file, []).push('config/database.yml', 'config/storage.yml', 'config/master.key')
 set :term_mode, :nil
 set :ubuntu_code_name, 'bionic' # To find out - (`lsb_release --codename | cut -f2`).
 # set :sheet_name, 'Product deployment status'
@@ -74,16 +74,16 @@ task setup_prerequisites: :remote_environment do
     command %[sudo -A apt-get install -y #{package}]
   end
 
-  comment "---------------------------------------------------------"
-  comment "-----> Installing Ruby Version Manager"
-  comment "---------------------------------------------------------"
-  command %[sudo -A apt-get install libgdbm-dev libncurses5-dev automake libtool bison libffi-dev]
-  command %[gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB]
-  command %[curl -sSL https://get.rvm.io | bash -s stable]
-  command %[source "#{fetch(:rvm_path)}"]
-  command %[rvm install "#{fetch(:ruby_version)}"]
-  command %[rvm use "#{fetch(:ruby_version)}" --default]
-  command %[gem install bundler]
+  # comment "---------------------------------------------------------"
+  # comment "-----> Installing Ruby Version Manager"
+  # comment "---------------------------------------------------------"
+  # command %[sudo -A apt-get install libgdbm-dev libncurses5-dev automake libtool bison libffi-dev]
+  # command %[gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB]
+  # command %[curl -sSL https://get.rvm.io | bash -s stable]
+  # command %[source "#{fetch(:rvm_path)}"]
+  # command %[rvm install "#{fetch(:ruby_version)}"]
+  # command %[rvm use "#{fetch(:ruby_version)}" --default]
+  # command %[gem install bundler]
 
   command %[mkdir "#{fetch(:deploy_to)}"]
   command %[chown -R "#{fetch(:user)}" "#{fetch(:deploy_to)}"]
@@ -109,6 +109,7 @@ task setup: :remote_environment do
 
   invoke :setup_prerequisites
   invoke :setup_yml
+  invoke :setup_credentials
 end
 
 task setup_yml: :remote_environment do
@@ -118,7 +119,8 @@ task setup_yml: :remote_environment do
 end
 
 task setup_credentials: :remote_environment do
-  command "export RAILS_MASTER_KEY=#{IO.binread(File.join(__dir__,'master.key'))}"
+  command %[echo "#{IO.binread(File.join(__dir__, 'master.key'))}" > "#{File.join(fetch(:deploy_to), 'shared/config', 'master.key')}"]
+  # command "export RAILS_MASTER_KEY=#{IO.binread(File.join(__dir__,'master.key'))}"
 end
 
 task set_sudo_password: :remote_environment do
@@ -145,7 +147,6 @@ task :deploy => :remote_environment do
     invoke :'git:clone'
     invoke :'deploy:link_shared_paths'
     invoke :'bundle:install'
-    invoke :setup_credentials
     invoke :'mysql:create_database'
     invoke :'rails:db_migrate'
     invoke :'rails:assets_precompile'
